@@ -1,6 +1,8 @@
 import inquirer from "inquirer"
 import chalk from 'chalk';
-
+import * as notificationsInterface from './interfaces/notifications.js'
+import * as incidentsInterface from './interfaces/incidents.js'
+import * as loactionsInterface from './interfaces/location.js'
 export interface Rol {
     name: string
 }
@@ -11,15 +13,27 @@ class Persona {
     }
 }
 class Ciudadano extends Persona {
-    rol: string = 'Ciudadano'
+    rol: string = 'Ciudadano';
+    correo: string = '';
+    pass: string = '';
     constructor(name: string){
-        super(name)
+        super(name);
+    }
+    async login(correo: string, pass: string){
+        this.correo = correo;
+        this.pass = pass;
     }
 }
 class ServidorPublico extends Persona {
-    rol: string = 'Servidor Publico'
+    rol: string = 'Ciudadano';
+    correo: string = '';
+    pass: string = '';
     constructor(name: string){
-        super(name)
+        super(name);
+    }
+    async login(correo: string, pass: string){
+        this.correo = correo;
+        this.pass = pass;
     }
 }
 
@@ -30,7 +44,7 @@ let player = await inquirer.prompt({
     message: "Please enter your name"
 })
 
-console.log(`Hola, mucho gusto ${chalk.bold.green("hola")}`)
+console.log(`Hola, mucho gusto ${chalk.bold.green(player.name)}`)
 let incidentType = await inquirer.prompt({
     type: "list",
     name: 'select',
@@ -42,11 +56,32 @@ let incidentType = await inquirer.prompt({
 })
 let userOne
 if(incidentType == 'Ciudadano'){
-    userOne = new Ciudadano(player.name)
-    console.log(`Hola, mucho gusto ${chalk.bold.green(userOne)}`)
+    userOne = new Ciudadano(player.name);
+    let credentials = await login();
+    userOne.login(credentials.mailData.correo, credentials.passData.pass);
+    console.log(userOne);
 }else{
-    userOne = new ServidorPublico(player.name)
-    console.log(`Hola, mucho gusto ${chalk.bold.green(userOne)}`)
+    userOne = new Ciudadano(player.name);
+    let credentials = await login();
+    userOne.login(credentials.mailData.correo, credentials.passData.pass);
+    console.log(userOne);
 }
 
 
+async function login(){
+    let mailData = await inquirer.prompt({
+        type: "input",
+        name: "correo",
+        message: "Ingresa tu correo"
+    })
+    let passData = await inquirer.prompt({
+        type: "input",
+        name: "pass",
+        message: "Ingresa tu contraseña"
+    })
+    let credentials ={
+        mailData,
+        passData
+    }
+    return credentials
+}
