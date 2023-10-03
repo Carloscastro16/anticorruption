@@ -27,15 +27,3 @@ export async function reportarIncidente(){
         message: "Ingresa la hora del incidente"
     })
 }
-export async function changeIncidentStatus(){
-    
-}
-export async function selectCorruptionType(){
-    
-}
-export function seeIncident(){
-
-}
-export function getIncidentStatus(){
-
-}

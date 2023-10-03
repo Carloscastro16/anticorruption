@@ -1,18 +1,28 @@
-import inquirer from "inquirer"
+import inquirer, { Answers } from "inquirer"
 import chalk from 'chalk';
 import * as notificationsInterface from './interfaces/notifications.js'
 import * as incidentsInterface from './interfaces/incidents.js'
 import * as searchingInterface from './interfaces/searching.js'
+
+//Interfaces creadas para tipar datos
 export interface Rol {
     name: 'Ciudadano' | 'Servidor Publico'
 }
 export interface TipoCorrupcion {
     corrupcion: 'Nepotismo' | 'Fraude' | 'Soborno';
 }
+
+//--- CLASES CREADAS ---
 class Persona {
     name: string;
-    constructor(name: string){
-        this.name = name
+    edad: string;
+    sexo: string;
+    curp: string;
+    constructor(name: string, edad: string, sexo: string, curp: string) {
+        this.name = name;
+        this.edad = edad;
+        this.sexo = sexo;
+        this.curp = curp;
     }
 }
 class Ciudadano extends Persona {
@@ -22,8 +32,8 @@ class Ciudadano extends Persona {
     incidentesRegistrados = [
         {}
     ]
-    constructor(name: string){
-        super(name);
+    constructor(name: string, edad: string, sexo: string, curp: string){
+        super(name, edad, sexo, curp);
     }
     async login(correo: string, pass: string){
         this.correo = correo;
@@ -37,14 +47,16 @@ class ServidorPublico extends Persona {
     rol: 'Ciudadano' | 'Servidor Publico' = 'Servidor Publico';
     correo: string = '';
     pass: string = '';
-    constructor(name: string){
-        super(name);
+    constructor(name: string, edad: string, sexo: string, curp: string){
+        super(name, edad, sexo, curp);
     }
     async login(correo: string, pass: string){
         this.correo = correo;
         this.pass = pass;
     }
 }
+
+// --- AL SER PADRE PUEDE CONTRUIRSE DESPUES ---
 class Incidente {
     fecha: string = '';
     hora: string = '';
@@ -55,9 +67,9 @@ class Incidente {
     status: 'En proceso' | 'Solucionado' = 'En proceso';
     constructor(
     ){
-        
     }
     verStatus(){
+        console.log('El estado de tu reporte es: ', this.status);
         return this.status;
     }
     changeStatus(status: 'En proceso' | 'Solucionado'){
@@ -109,14 +121,53 @@ class Ubicacion{
     }
 }
 
-let user = await inquirer.prompt({
-    type: "input",
-    name: "name",
-    message: "Please enter your name"
-})
 
-console.log(`Hola, mucho gusto ${chalk.bold.green(user.name)}`)
-console.log("---------------------------------------------")
+// ------ PROGRAMA COMPLETO ------
+let user 
+let userData
+user = await inquirer.prompt({
+    type: "confirm",
+    name: "signed",
+    message: "¿Tienes una cuenta?"
+})
+if(user.signed){
+    userData = {
+        name: '',
+        edad: '',
+        sexo: '',
+        curpData: ''
+    }
+}else{
+    console.log('--- Vamos a crearte una cuenta ---')
+    let nameData = await inquirer.prompt({
+        type: "input",
+        name: "name",
+        message: "Ingresa tu nombre: "
+    })
+    let edadData = await inquirer.prompt({
+        type: "input",
+        name: "edad",
+        message: "Ingresa tu edad: "
+    })
+    let sexoData = await inquirer.prompt({
+        type: "input",
+        name: "sexo",
+        message: "Ingresa tu sexo: "
+    })
+    let curpData = await inquirer.prompt({
+        type: "input",
+        name: "curp",
+        message: "Ingresa tu CURP: "
+    })
+    userData = {
+        name: nameData.name,
+        edad: edadData.edad,
+        sexo: sexoData.sexo,
+        curpData: curpData.curp
+    }
+}
+
+
 let roleType = await inquirer.prompt({
     type: "list",
     name: 'select',
@@ -132,7 +183,7 @@ let ubicacion
 let incidente
 let exit = false
 if(roleType.select == 'Ciudadano'){
-    userOne = new Ciudadano(user.name);
+    userOne = new Ciudadano(userData?.name, userData?.edad, userData?.sexo, userData?.curpData);
     let credentials = await login();
     userOne.login(credentials.mailData.correo, credentials.passData.pass);
     while (exit == false) {
@@ -143,17 +194,28 @@ if(roleType.select == 'Ciudadano'){
             choices: [
                 'Agregar incidente nuevo',
                 'Ver incidentes',
+                'Ver status de mis incidentes',
                 'Activar o desactivar notificaciones',
                 'Salir'
             ]
         })
         switch(reportsConfirm.reports){
+            case 'Ver status de mis incidentes':
+                if(incidente){
+                    incidente.verStatus();
+                }else{
+                    console.log('No tienes incidentes registrados')
+                }
+                break;
             case 'Agregar incidente nuevo':
+                console.log("---------------------------------------------")
                 let addReport = await inquirer.prompt({
                     type: "confirm",
                     name: "addReport",
                     message: "¿Quieres agregar un incidente nuevo?"
                 })
+                console.log("---------------------------------------------")
+                console.log("---------------------------------------------")
                 console.log("Generando incidente nuevo")
                 console.log("---------------------------------------------")
                 console.log(`${chalk.bold.blue('Primero proporciona datos de ubicación del incidente')}`)
@@ -188,10 +250,11 @@ if(roleType.select == 'Ciudadano'){
                 console.log(incidente);
             break;
             case 'Ver incidentes':
-                console.log('Ver todos los incidentes');
-
+                console.log('Todos los incidentes');
+                console.log("---------------------------------------------")
                 console.log("---------------------------------------------")
                 searchingInterface.getAllIncidents();
+                console.log("---------------------------------------------")
                 console.log("---------------------------------------------")
                 break;
             case 'Activar o desactivar notificaciones':
@@ -199,12 +262,16 @@ if(roleType.select == 'Ciudadano'){
                 if(notificationsStatus){
                     console.log("---------------------------------------------")
                     console.log('Las notificaciones están activadas')
-                console.log("---------------------------------------------")
+                    console.log("---------------------------------------------")
                 }else{
+                    console.log("---------------------------------------------")
                     console.log('Las notificaciones están desactivadas')
+                    console.log("---------------------------------------------")
                 }
                 break;
             case 'Salir':
+                console.log("---------------------------------------------")
+                console.log("---------------------------------------------")
                 console.log('Gracias por usar el programa');
                 exit = true;
                 break;
@@ -212,7 +279,7 @@ if(roleType.select == 'Ciudadano'){
         
     }
 }else{
-    userOne = new ServidorPublico(user.name);
+    userOne = new ServidorPublico(userData?.name, userData?.edad, userData?.sexo, userData?.curpData);
     let credentials = await login();
     userOne.login(credentials.mailData.correo, credentials.passData.pass);
     while(exit == false){
@@ -221,6 +288,7 @@ if(roleType.select == 'Ciudadano'){
             name: "reports",
             message: "¿Qué quieres hacer?",
             choices: [
+                'Activar o desactivar notificaciones',
                 'Ver todos los incidentes',
                 'Ver incidentes por categoría',
                 'Modificar incidentes',
@@ -229,6 +297,18 @@ if(roleType.select == 'Ciudadano'){
         })
         switch(reportsConfirm.reports){
             
+            case 'Activar o desactivar notificaciones':
+                let notificationsStatus = notificationsInterface.toggleNotifications();
+                if(notificationsStatus){
+                    console.log("---------------------------------------------")
+                    console.log('Las notificaciones están activadas')
+                    console.log("---------------------------------------------")
+                }else{
+                    console.log("---------------------------------------------")
+                    console.log('Las notificaciones están desactivadas')
+                    console.log("---------------------------------------------")
+                }
+                break;
             case 'Ver todos los incidentes':
                 console.log('Ver todos los incidentes');
                 searchingInterface.getAllIncidents();
@@ -272,6 +352,7 @@ if(roleType.select == 'Ciudadano'){
                 }else{
                     console.log('No se encontró');
                 }
+
                 console.log("---------------------------------------------")
                 let statusChange = await inquirer.prompt({
                     type: "list",
@@ -283,7 +364,9 @@ if(roleType.select == 'Ciudadano'){
                     ]
                 })
                 incidentModify.changeStatus(statusChange.select);
-                
+                console.log("---------------------------------------------")
+                console.log(incidentModify);
+                console.log("---------------------------------------------")
                 break;
             case 'Salir':
                 console.log("---------------------------------------------")
@@ -294,7 +377,6 @@ if(roleType.select == 'Ciudadano'){
                 exit = true;
                 break;
         }
-        console.log(userOne);
     }
 }
 
@@ -398,7 +480,7 @@ async function createIncident(location: Object){
     let evidenceData = await inquirer.prompt({
         type: "input",
         name: "evidencia",
-        message: "Descripcion del incidente:"
+        message: "Ingresa la evidencia que tengas:"
     })
     let incidentData = {
         fecha: fechaData.fecha,
